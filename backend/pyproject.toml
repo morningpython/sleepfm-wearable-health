@@ -1,0 +1,119 @@
+[tool.poetry]
+name = "sleepfm-backend"
+version = "0.1.0"
+description = "SleepFM Wearable Health - ML Backend API Service"
+authors = ["SleepFM Team <team@sleepfm.io>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "app"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+# Web Framework
+fastapi = "^0.104.0"
+uvicorn = {version = "^0.24.0", extras = ["standard"]}
+pydantic = "^2.0.0"
+pydantic-settings = "^2.0.0"
+
+# Database
+sqlalchemy = "^2.0.0"
+psycopg2-binary = "^2.9.0"
+alembic = "^1.12.0"
+
+# Authentication & Security
+python-jose = {version = "^3.3.0", extras = ["cryptography"]}
+passlib = {version = "^1.7.0", extras = ["bcrypt"]}
+python-multipart = "^0.0.6"
+cryptography = "^41.0.0"
+
+# ML & Data Processing
+torch = "^2.0.0"
+numpy = "^1.24.0"
+scipy = "^1.11.0"
+scikit-learn = "^1.3.0"
+pandas = "^2.0.0"
+
+# Cloud Storage
+boto3 = "^1.28.0"
+python-dotenv = "^1.0.0"
+
+# Logging & Monitoring
+python-json-logger = "^2.0.0"
+
+# Development Tools
+pytest = "^7.4.0"
+pytest-asyncio = "^0.21.0"
+pytest-cov = "^4.1.0"
+black = "^23.10.0"
+flake8 = "^6.1.0"
+mypy = "^1.5.0"
+pre-commit = "^3.4.0"
+ruff = "^0.10.0"
+
+[tool.poetry.dev-dependencies]
+
+[tool.poetry.group.dev.dependencies]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+
+[[tool.mypy.overrides]]
+module = [
+    "torch.*",
+    "scipy.*",
+    "sklearn.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --cov=app --cov-report=html --cov-report=term-missing"
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "*/tests/*",
+    "*/__init__.py",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[tool.ruff.isort]
+known-first-party = ["app"]

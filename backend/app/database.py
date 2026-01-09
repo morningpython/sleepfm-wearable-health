@@ -1,7 +1,8 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from app.config import settings
+from app.models import Base
 
 # SQLAlchemy 설정
 engine = create_engine(
@@ -12,9 +13,6 @@ engine = create_engine(
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Base 모델 (모든 모델은 이를 상속)
-Base = declarative_base()
 
 
 def get_db():

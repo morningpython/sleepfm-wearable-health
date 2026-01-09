@@ -88,9 +88,10 @@ async def health_check():
 
 
 # 라우트 등록
-from app.routes import auth
+from app.routes import auth, sessions
 
 app.include_router(auth.router, prefix=settings.api_prefix)
+app.include_router(sessions.router, prefix=settings.api_prefix)
 
 
 if __name__ == "__main__":

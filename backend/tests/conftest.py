@@ -74,8 +74,8 @@ def auth_headers(client: TestClient, test_user):
     # 로그인하여 토큰 획득
     response = client.post(
         "/api/v1/auth/token",
-        data={
-            "username": "testuser",
+        json={
+            "email": "test@example.com",
             "password": "testpass123"
         }
     )

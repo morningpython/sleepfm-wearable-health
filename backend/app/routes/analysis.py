@@ -130,8 +130,10 @@ def _perform_sleep_stage_analysis(
     import numpy as np
     from app.ml.models.heads import SleepStageClassifier
     
+    # duration_hours를 분으로 변환
+    duration_minutes = (session.duration_hours or 8) * 60  # 기본 8시간
     # 8시간 = 960개 30초 에포크
-    num_epochs = int(session.duration_minutes / 0.5)  # duration_minutes / 0.5
+    num_epochs = int(duration_minutes / 0.5)  # duration_minutes / 0.5
     
     # 실제 분류기 생성
     classifier = SleepStageClassifier(input_dim=512, num_classes=5)
@@ -141,13 +143,16 @@ def _perform_sleep_stage_analysis(
     # TODO: 실제 센서 데이터 로딩 → 전처리 → SleepFM 임베딩
     embeddings = torch.randn(1, num_epochs, 512)
     
+    # batch 차원 제거하여 (num_epochs, 512)로 변환
+    embeddings_2d = embeddings.squeeze(0)  # (num_epochs, 512)
+    
     # 실제 모델로 예측
     with torch.no_grad():
-        predictions, probabilities = classifier.predict(embeddings, return_probs=True)
+        predictions, probabilities = classifier.predict(embeddings_2d, return_probs=True)
     
     # numpy 변환
-    stage_predictions = predictions.squeeze(0).cpu().numpy()  # (num_epochs,)
-    stage_probs = probabilities.squeeze(0).cpu().numpy()  # (num_epochs, 5)
+    stage_predictions = predictions.cpu().numpy()  # (num_epochs,)
+    stage_probs = probabilities.cpu().numpy()  # (num_epochs, 5)
     
     # 각 에포크의 최대 확률값
     max_probs = np.max(stage_probs, axis=1)
@@ -159,7 +164,7 @@ def _perform_sleep_stage_analysis(
         SleepEpoch(
             epoch_number=i,
             stage=int(stage_predictions[i]),
-            stage_name=stage_names_map[stage_predictions[i]],
+            stage_name=stage_names_map[int(stage_predictions[i]) % len(stage_names_map)],  # 안전하게 인덱스 처리
             probability=float(max_probs[i])
         )
         for i in range(num_epochs)
@@ -291,8 +296,10 @@ def _perform_apnea_analysis(session: SleepSession):
     detector = ApneaDetector(input_dim=512, num_classes=3)
     detector.eval()
     
+    # duration_hours를 분으로 변환
+    duration_minutes = (session.duration_hours or 8) * 60  # 기본 8시간
     # 8시간 데이터
-    num_epochs = int(session.duration_minutes / 0.5)  # 30초 에포크
+    num_epochs = int(duration_minutes / 0.5)  # 30초 에포크
     
     # 더미 임베딩 생성 (실제로는 SleepFM 인코더 사용)
     # TODO: 실제 호흡 신호 데이터 로딩 → 전처리 → SleepFM 임베딩
@@ -318,7 +325,7 @@ def _perform_apnea_analysis(session: SleepSession):
     ]
     
     # AHI 계산
-    total_sleep_hours = session.duration_minutes / 60.0
+    total_sleep_hours = (session.duration_hours or 8)
     ahi = detector.calculate_ahi(events_dict_list, total_sleep_hours)
     
     # 심각도 분류

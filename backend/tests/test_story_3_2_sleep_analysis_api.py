@@ -19,16 +19,23 @@ import numpy as np
 class TestSleepStageAnalysisEndpoint:
     """수면 단계 분석 API 엔드포인트 테스트"""
     
-    def test_analyze_sleep_stages_endpoint_exists(self, client: TestClient, auth_headers):
-        """POST /api/v1/analyze/sleep-stages 엔드포인트 존재"""
+    def test_analyze_sleep_stages_endpoint_exists(self, client: TestClient, auth_headers, sample_session):
+        """POST /api/v1/analyze/sleep-stages 엔드포인트 존재 확인
+        
+        Note: 세션이 필요하므로 sample_session 사용. 엔드포인트가 없으면
+        라우트 not found 404가 반환됨. "Session not found" 404는 엔드포인트가
+        동작하고 있음을 의미.
+        """
         response = client.post(
             "/api/v1/analyze/sleep-stages",
             headers=auth_headers,
-            json={"session_id": 1}
+            json={"session_id": sample_session.id}
         )
         
-        # 404가 아니어야 함 (엔드포인트 존재)
-        assert response.status_code != 404
+        # 엔드포인트가 존재하므로 인증 후 정상 응답 (200) 또는 비즈니스 로직 에러
+        # 라우트 자체가 없으면 {"detail": "Not Found"} 와 함께 404
+        assert response.status_code in [200, 400, 422], \
+            f"Expected 200/400/422, got {response.status_code}: {response.text}"
     
     def test_analyze_sleep_stages_requires_auth(self, client: TestClient):
         """인증 없이 접근 불가"""

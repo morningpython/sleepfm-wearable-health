@@ -301,19 +301,26 @@ class TestApneaAnalysisAuthorization:
     def test_user_can_only_analyze_own_sessions(self, client, auth_headers, test_user, db_session):
         """사용자는 자신의 세션만 분석 가능"""
         from app.models import User, SleepSession
+        from app.utils.security import hash_password
         
         # 다른 사용자 생성
-        other_user = User(email="other@example.com", username="other")
-        other_user.set_password("password")
+        other_user = User(
+            email="other@example.com",
+            username="other",
+            full_name="Other User",
+            hashed_password=hash_password("password"),
+            is_active=1
+        )
         db_session.add(other_user)
         db_session.commit()
         
         # 다른 사용자의 세션 생성
         other_session = SleepSession(
             user_id=other_user.id,
-            start_time=datetime.utcnow(),
-            duration_minutes=480,
-            data_file_path="/fake/path/other.json"
+            session_date=datetime(2026, 1, 25, 22, 0, 0),
+            duration_hours=8,
+            raw_data_path="/fake/path/other.json",
+            analysis_status="pending"
         )
         db_session.add(other_session)
         db_session.commit()
@@ -337,9 +344,10 @@ class TestApneaAnalysisEdgeCases:
         
         short_session = SleepSession(
             user_id=test_user.id,
-            start_time=datetime.utcnow(),
-            duration_minutes=30,  # 30분
-            data_file_path="/fake/path/short.json"
+            session_date=datetime(2026, 1, 25, 22, 0, 0),
+            duration_hours=0.5,  # 30분 -> 0.5시간
+            raw_data_path="/fake/path/short.json",
+            analysis_status="pending"
         )
         db_session.add(short_session)
         db_session.commit()

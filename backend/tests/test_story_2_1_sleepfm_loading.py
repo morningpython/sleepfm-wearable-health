@@ -85,11 +85,11 @@ class TestSleepFMEncoder:
         # evaluation 모드 확인
         assert not model.training
         
-        # Dropout/BatchNorm이 evaluation 모드
+        # Dropout/BatchNorm이 evaluation 모드인지 확인
         for module in model.modules():
-            if hasattr(module, "training"):
-                # eval 모드에서도 정상 작동하는지 확인
-                assert isinstance(module, (torch.nn.Dropout, torch.nn.BatchNorm1d))
+            if isinstance(module, (torch.nn.Dropout, torch.nn.BatchNorm1d)):
+                # eval 모드에서는 training=False여야 함
+                assert not module.training, f"{type(module).__name__} should be in eval mode"
     
     def test_gradient_disabled(self):
         """그래디언트가 비활성화되는지 확인"""

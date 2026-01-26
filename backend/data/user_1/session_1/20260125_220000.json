@@ -1,0 +1,18 @@
+{
+  "device_type": "custom_device",
+  "sampling_rate": 100,
+  "duration_hours": 8.0,
+  "data": [
+    {
+      "timestamp": 1737842400.0,
+      "heart_rate": null,
+      "respiratory_rate": null,
+      "spo2": null,
+      "acceleration_x": null,
+      "acceleration_y": null,
+      "acceleration_z": null,
+      "ecg": null,
+      "ppg": null
+    }
+  ]
+}

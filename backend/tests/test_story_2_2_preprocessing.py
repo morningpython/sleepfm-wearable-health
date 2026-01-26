@@ -261,10 +261,12 @@ class TestDataValidation:
             create_windows(np.array([]), 20)
     
     def test_invalid_window_size(self):
-        """잘못된 윈도우 크기"""
+        """잘못된 윈도우 크기 (0 이하)"""
         signal = np.arange(100)
         with pytest.raises(ValueError):
-            create_windows(signal, 200)  # 신호보다 큼
+            create_windows(signal, 0)  # 0은 유효하지 않음
+        with pytest.raises(ValueError):
+            create_windows(signal, -10)  # 음수도 유효하지 않음
     
     def test_window_size_larger_than_signal(self):
         """윈도우가 신호보다 큼"""

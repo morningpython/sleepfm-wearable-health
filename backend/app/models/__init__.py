@@ -66,3 +66,7 @@ class SleepAnalysis(Base):
 
     def __repr__(self):
         return f"<SleepAnalysis(id={self.id}, session_id={self.session_id}, type='{self.analysis_type}')>"
+
+
+# Export all models
+__all__ = ["Base", "User", "SleepSession", "SleepAnalysis"]

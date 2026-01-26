@@ -6,15 +6,18 @@ from pydantic import BaseModel, Field
 class SensorData(BaseModel):
     """센서 데이터 포인트"""
 
-    timestamp: float = Field(..., description="Unix 타임스탬프")
+    timestamp: datetime | float = Field(..., description="타임스탬프 (datetime 또는 Unix 타임스탬프)")
     heart_rate: float | None = Field(None, description="심박수 (bpm)")
     respiratory_rate: float | None = Field(None, description="호흡률 (breath/min)")
     spo2: float | None = Field(None, description="혈산소포화도 (%)")
-    acceleration_x: float | None = Field(None, description="X축 가속도")
-    acceleration_y: float | None = Field(None, description="Y축 가속도")
-    acceleration_z: float | None = Field(None, description="Z축 가속도")
+    acceleration_x: float | None = Field(None, alias="accel_x", description="X축 가속도")
+    acceleration_y: float | None = Field(None, alias="accel_y", description="Y축 가속도")
+    acceleration_z: float | None = Field(None, alias="accel_z", description="Z축 가속도")
+    ecg: list[float] | None = Field(None, description="ECG 데이터")
+    ppg: list[float] | None = Field(None, description="PPG 데이터")
 
     class Config:
+        populate_by_name = True
         json_schema_extra = {
             "example": {
                 "timestamp": 1704729600.0,
@@ -32,7 +35,7 @@ class SensorDataUpload(BaseModel):
     """센서 데이터 업로드 요청"""
 
     session_date: datetime = Field(..., description="수면 세션 시작 시간")
-    duration_hours: int = Field(..., gt=0, le=24, description="수면 시간 (1-24시간)")
+    duration_hours: float = Field(..., gt=0, le=24, description="수면 시간 (1-24시간)")
     device_type: str = Field(..., description="기기 유형 (apple_watch, galaxy_watch 등)")
     sampling_rate: int = Field(default=100, description="샘플링 레이트 (Hz)")
     data: list[SensorData] = Field(..., description="센서 데이터 배열")
@@ -65,7 +68,7 @@ class SleepSessionResponse(BaseModel):
     id: int = Field(..., description="세션 ID")
     user_id: int = Field(..., description="사용자 ID")
     session_date: datetime = Field(..., description="세션 시작 시간")
-    duration_hours: int = Field(..., description="수면 시간")
+    duration_hours: float = Field(..., description="수면 시간")
     analysis_status: str = Field(..., description="분석 상태")
     raw_data_path: str | None = Field(None, description="원본 데이터 경로")
     created_at: datetime = Field(..., description="생성 시간")

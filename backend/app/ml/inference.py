@@ -52,7 +52,7 @@ class InferenceEngine:
             self.extractor = EmbeddingExtractor(
                 model=model,
                 device=device,
-                batch_size=32 if device == "cpu" else 64,
+                max_batch_size=32 if device == "cpu" else 64,
             )
         else:
             self.extractor = embedding_extractor

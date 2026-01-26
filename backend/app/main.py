@@ -25,74 +25,79 @@ async def lifespan(app: FastAPI):
     logger.info("🛑 SleepFM Backend API 종료")
 
 
-app = FastAPI(
-    title=settings.project_name,
-    version=settings.project_version,
-    debug=settings.debug,
-    lifespan=lifespan,
-)
-
-# CORS 미들웨어
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=settings.cors_credentials,
-    allow_methods=settings.cors_methods,
-    allow_headers=settings.cors_headers,
-)
-
-
-# 에러 처리
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """요청 검증 에러 핸들러"""
-    logger.warning(f"요청 검증 실패: {exc}")
-    return JSONResponse(
-        status_code=422,
-        content={
-            "detail": exc.errors(),
-            "message": "요청 데이터가 유효하지 않습니다",
-        },
-    )
-
-
-@app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
-    """일반 에러 핸들러"""
-    logger.error(f"예상치 못한 에러: {exc}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "내부 서버 에러", "message": "예상치 못한 오류가 발생했습니다"},
-    )
-
-
-# 헬스 체크 엔드포인트
-@app.get("/", tags=["Health"])
-async def root():
-    """루트 엔드포인트"""
-    return {
-        "status": "ok",
-        "message": "SleepFM Backend API is running",
-        "version": settings.project_version,
-    }
-
-
-@app.get("/api/v1/health", tags=["Health"])
-async def health_check():
-    """헬스 체크 엔드포인트"""
-    return {
-        "status": "healthy",
-        "service": settings.project_name,
-        "version": settings.project_version,
-    }
-
-
-# 라우트 등록
+# 라우터 import를 app 생성 전에 수행
 from app.routes import auth, sessions, analysis
 
-app.include_router(auth.router, prefix=settings.api_prefix)
-app.include_router(sessions.router, prefix=settings.api_prefix)
-app.include_router(analysis.router)
+
+def create_app(enable_lifespan: bool = True) -> FastAPI:
+    """FastAPI 애플리케이션 팩토리"""
+    app_instance = FastAPI(
+        title=settings.project_name,
+        version=settings.project_version,
+        debug=settings.debug,
+        lifespan=lifespan if enable_lifespan else None,
+    )
+
+    # 라우트 등록 (MUST be before any other decorators/handlers)
+    app_instance.include_router(auth.router, prefix=settings.api_prefix)
+    app_instance.include_router(sessions.router, prefix=settings.api_prefix)
+    app_instance.include_router(analysis.router)
+
+    # CORS 미들웨어
+    app_instance.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=settings.cors_credentials,
+        allow_methods=settings.cors_methods,
+        allow_headers=settings.cors_headers,
+    )
+
+    # 에러 처리
+    @app_instance.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        """요청 검증 에러 핸들러"""
+        logger.warning(f"요청 검증 실패: {exc}")
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": exc.errors(),
+                "message": "요청 데이터가 유효하지 않습니다",
+            },
+        )
+
+    @app_instance.exception_handler(Exception)
+    async def general_exception_handler(request: Request, exc: Exception):
+        """일반 에러 핸들러"""
+        logger.error(f"예상치 못한 에러: {exc}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "내부 서버 에러", "message": "예상치 못한 오류가 발생했습니다"},
+        )
+
+    # 헬스 체크 엔드포인트
+    @app_instance.get("/", tags=["Health"])
+    async def root():
+        """루트 엔드포인트"""
+        return {
+            "status": "ok",
+            "message": "SleepFM Backend API is running",
+            "version": settings.project_version,
+        }
+
+    @app_instance.get("/api/v1/health", tags=["Health"])
+    async def health_check():
+        """헬스 체크 엔드포인트"""
+        return {
+            "status": "healthy",
+            "service": settings.project_name,
+            "version": settings.project_version,
+        }
+    
+    return app_instance
+
+
+# Create the default app instance
+app = create_app()
 
 
 if __name__ == "__main__":

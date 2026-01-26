@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Integer, String, func
+from sqlalchemy import Column, DateTime, Integer, String, Float, ForeignKey, JSON, func
 from sqlalchemy.orm import DeclarativeBase
 
 
@@ -50,3 +50,19 @@ class SleepSession(Base):
 
     def __repr__(self):
         return f"<SleepSession(id={self.id}, user_id={self.user_id}, status='{self.analysis_status}')>"
+
+
+class SleepAnalysis(Base):
+    """수면 분석 결과 모델"""
+
+    __tablename__ = "sleep_analyses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("sleep_sessions.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    analysis_type = Column(String(50), nullable=False)  # sleep_stage, apnea, etc.
+    result_data = Column(JSON, nullable=True)  # 분석 결과 (JSON 형식)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    def __repr__(self):
+        return f"<SleepAnalysis(id={self.id}, session_id={self.session_id}, type='{self.analysis_type}')>"

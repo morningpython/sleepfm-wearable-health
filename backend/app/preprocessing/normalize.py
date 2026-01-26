@@ -167,8 +167,32 @@ def channel_wise_normalize(
         
         return normalized, params
     
+    elif signal_data.ndim == 3:
+        # (batch, samples, channels) - e.g., tokens
+        batch_size, num_samples, num_channels = signal_data.shape
+        normalized = np.zeros_like(signal_data, dtype=np.float64)
+        params = {}
+        
+        for ch in range(num_channels):
+            # 모든 batch의 해당 채널 데이터를 flatten해서 통계 계산
+            channel_data = signal_data[:, :, ch].flatten()
+            
+            if method == "standardize":
+                _, mean, std = standardize_signal(channel_data)
+                # 각 batch에 동일한 mean/std 적용
+                for b in range(batch_size):
+                    normalized[b, :, ch] = (signal_data[b, :, ch] - mean) / std
+                params[f"ch{ch}"] = {"mean": mean, "std": std}
+            elif method == "normalize":
+                for b in range(batch_size):
+                    normalized[b, :, ch] = normalize_signal(signal_data[b, :, ch])
+            else:
+                raise ValueError(f"Unknown method: {method}")
+        
+        return normalized, params
+    
     else:
-        raise ValueError("Signal must be 1D or 2D")
+        raise ValueError("Signal must be 1D, 2D, or 3D")
 
 
 def inverse_standardize(

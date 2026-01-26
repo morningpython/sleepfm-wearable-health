@@ -99,7 +99,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-v --cov=app --cov-report=html --cov-report=term-missing"
+addopts = "-v"
 asyncio_mode = "auto"
 
 [tool.coverage.run]

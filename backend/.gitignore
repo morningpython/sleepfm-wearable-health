@@ -27,6 +27,12 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# ML Model checkpoints
+checkpoints/
+*.bin
+*.pt
+*.pth
+
 # PyInstaller
 *.manifest
 *.spec

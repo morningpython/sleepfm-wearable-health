@@ -116,24 +116,41 @@ def _perform_sleep_stage_analysis(
     """
     실제 수면 단계 분석 수행
     
+    TDD Refactor Phase:
+    - 실제 SleepStageClassifier 사용
+    - 더미 임베딩 생성 (실제 SleepFM 통합은 향후)
+    
     Args:
         session: 분석할 수면 세션
     
     Returns:
         (stages_data, summary_data): 에포크 데이터 및 요약
     """
-    # TODO: 실제 파이프라인 통합 (전처리 → 임베딩 → 분류)
-    # 현재는 더미 데이터 반환 (TDD Green 단계)
-    
+    import torch
     import numpy as np
+    from app.ml.models.heads import SleepStageClassifier
     
     # 8시간 = 960개 30초 에포크
-    num_epochs = int(session.duration_hours * 120)  # 2 epochs/min
+    num_epochs = int(session.duration_minutes / 0.5)  # duration_minutes / 0.5
     
-    # 더미 예측 생성 (실제로는 SleepStageClassifier 사용)
-    np.random.seed(42)
-    stage_predictions = np.random.randint(0, 5, size=num_epochs)
-    stage_probabilities = np.random.uniform(0.5, 0.99, size=num_epochs)
+    # 실제 분류기 생성
+    classifier = SleepStageClassifier(input_dim=512, num_classes=5)
+    classifier.eval()
+    
+    # 더미 임베딩 생성 (실제로는 SleepFM 인코더 사용)
+    # TODO: 실제 센서 데이터 로딩 → 전처리 → SleepFM 임베딩
+    embeddings = torch.randn(1, num_epochs, 512)
+    
+    # 실제 모델로 예측
+    with torch.no_grad():
+        predictions, probabilities = classifier.predict(embeddings, return_probs=True)
+    
+    # numpy 변환
+    stage_predictions = predictions.squeeze(0).cpu().numpy()  # (num_epochs,)
+    stage_probs = probabilities.squeeze(0).cpu().numpy()  # (num_epochs, 5)
+    
+    # 각 에포크의 최대 확률값
+    max_probs = np.max(stage_probs, axis=1)
     
     stage_names_map = ["Wake", "N1", "N2", "N3", "REM"]
     
@@ -143,7 +160,7 @@ def _perform_sleep_stage_analysis(
             epoch_number=i,
             stage=int(stage_predictions[i]),
             stage_name=stage_names_map[stage_predictions[i]],
-            probability=float(stage_probabilities[i])
+            probability=float(max_probs[i])
         )
         for i in range(num_epochs)
     ]
@@ -257,53 +274,55 @@ def _perform_apnea_analysis(session: SleepSession):
     """
     무호흡 분석 수행 (내부 헬퍼 함수)
     
+    TDD Refactor Phase:
+    - 실제 ApneaDetector 사용
+    - 더미 임베딩 생성 (실제 SleepFM 통합은 향후)
+    
     Args:
         session: SleepSession 인스턴스
     
     Returns:
         tuple: (events_data, ahi, severity, recommendations)
     """
-    # TODO: 실제 파이프라인 통합
-    # 1. 센서 데이터 로딩
-    # 2. 전처리
-    # 3. 임베딩 생성
-    # 4. ApneaDetector로 이벤트 탐지
-    # 5. AHI 계산
-    # 6. 심각도 분류
+    import torch
+    from app.ml.models.heads import ApneaDetector
     
-    # 현재는 더미 데이터 반환 (TDD Green Phase)
-    import numpy as np
+    # 실제 무호흡 탐지기 생성
+    detector = ApneaDetector(input_dim=512, num_classes=3)
+    detector.eval()
     
-    # 더미 이벤트 생성 (정상 심각도 시뮬레이션)
-    num_events = np.random.randint(0, 10)  # 0-10개 이벤트
-    events_data = []
+    # 8시간 데이터
+    num_epochs = int(session.duration_minutes / 0.5)  # 30초 에포크
     
-    for i in range(num_events):
-        event_type = "apnea" if np.random.random() > 0.5 else "hypopnea"
-        epoch_start = np.random.randint(0, 900)
-        duration_epochs = np.random.randint(1, 5)
-        
-        events_data.append(ApneaEvent(
-            epoch_start=epoch_start,
-            epoch_end=epoch_start + duration_epochs - 1,
-            event_type=event_type,
-            duration_seconds=duration_epochs * 30,
-            confidence=0.5 + np.random.random() * 0.4
-        ))
+    # 더미 임베딩 생성 (실제로는 SleepFM 인코더 사용)
+    # TODO: 실제 호흡 신호 데이터 로딩 → 전처리 → SleepFM 임베딩
+    embeddings = torch.randn(1, num_epochs, 512)
     
-    # AHI 계산 (8시간 기준)
+    # 실제 모델로 이벤트 탐지
+    events_dict_list = detector.detect_events(
+        embeddings,
+        threshold=0.5,
+        epoch_length_seconds=30
+    )
+    
+    # ApneaEvent 스키마로 변환
+    events_data = [
+        ApneaEvent(
+            epoch_start=event['epoch_start'],
+            epoch_end=event['epoch_end'],
+            event_type=event['event_type'],
+            duration_seconds=event['duration_seconds'],
+            confidence=event['confidence']
+        )
+        for event in events_dict_list
+    ]
+    
+    # AHI 계산
     total_sleep_hours = session.duration_minutes / 60.0
-    ahi = len(events_data) / total_sleep_hours
+    ahi = detector.calculate_ahi(events_dict_list, total_sleep_hours)
     
     # 심각도 분류
-    if ahi < 5:
-        severity = "Normal"
-    elif ahi < 15:
-        severity = "Mild"
-    elif ahi < 30:
-        severity = "Moderate"
-    else:
-        severity = "Severe"
+    severity = detector.classify_severity(ahi)
     
     # 권장사항 생성
     recommendations = _generate_apnea_recommendations(ahi, severity)

@@ -11,7 +11,7 @@ from datetime import datetime
 from app.main import app
 from app.database import Base, get_db
 from app.models import User, SleepSession
-from app.utils.security import get_password_hash
+from app.utils.security import hash_password
 
 
 # 테스트용 인메모리 데이터베이스
@@ -59,7 +59,7 @@ def test_user(db_session):
         email="test@example.com",
         username="testuser",
         full_name="Test User",
-        hashed_password=get_password_hash("testpass123"),
+        hashed_password=hash_password("testpass123"),
         is_active=1
     )
     db_session.add(user)

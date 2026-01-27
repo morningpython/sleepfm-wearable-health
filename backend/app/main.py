@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
 
 
 # 라우터 import를 app 생성 전에 수행
-from app.routes import auth, sessions, analysis
+from app.routes import auth, sessions, analysis, history
 
 
 def create_app(enable_lifespan: bool = True) -> FastAPI:
@@ -42,6 +42,7 @@ def create_app(enable_lifespan: bool = True) -> FastAPI:
     app_instance.include_router(auth.router, prefix=settings.api_prefix)
     app_instance.include_router(sessions.router, prefix=settings.api_prefix)
     app_instance.include_router(analysis.router)
+    app_instance.include_router(history.router)  # Story 4.4
 
     # CORS 미들웨어
     app_instance.add_middleware(

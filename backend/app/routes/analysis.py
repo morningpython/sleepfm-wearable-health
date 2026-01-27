@@ -2,6 +2,7 @@
 수면 분석 API 라우트
 
 Story 3.2: 수면 단계 분석 API 엔드포인트
+Story 4.2: 질병 위험 예측 API 엔드포인트
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -22,6 +23,12 @@ from app.schemas.apnea import (
     ApneaAnalysisRequest,
     ApneaAnalysisResponse,
     ApneaEvent
+)
+from app.schemas.disease_risk import (
+    DiseaseRiskRequest,
+    DiseaseRiskResponse,
+    DiseasePrediction,
+    ConfidenceInterval
 )
 from app.ml.analysis.sleep_metrics import calculate_sleep_efficiency, calculate_stage_durations
 
@@ -382,3 +389,375 @@ def _generate_apnea_recommendations(ahi: float, severity: str) -> List[str]:
         ])
     
     return recommendations
+
+
+@router.post("/disease-risk", response_model=DiseaseRiskResponse)
+def analyze_disease_risk(
+    request: DiseaseRiskRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    질병 위험 분석 수행 (Story 4.2)
+    
+    주어진 세션 ID의 데이터를 분석하여 5개 질환의 위험도를 예측합니다.
+    
+    Args:
+        request: 분석 요청 (session_id)
+        db: 데이터베이스 세션
+        current_user: 현재 인증된 사용자
+    
+    Returns:
+        DiseaseRiskResponse: 분석 결과 (5개 질환별 예측)
+    
+    Raises:
+        HTTPException 404: 세션을 찾을 수 없음
+        HTTPException 403: 권한 없음
+    """
+    # 1. 세션 조회
+    session = db.query(SleepSession).filter(
+        SleepSession.id == request.session_id
+    ).first()
+    
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Session not found: {request.session_id}"
+        )
+    
+    # 권한 확인 (본인 세션만 분석 가능)
+    if session.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to analyze this session"
+        )
+    
+    logger.info(f"Analyzing disease risk for session {session.id}")
+    
+    # 2. 질병 위험 분석 실행
+    try:
+        predictions_data = _perform_disease_risk_analysis(session)
+    except Exception as e:
+        logger.error(f"Disease risk analysis failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Analysis failed: {str(e)}"
+        )
+    
+    # 3. 결과 DB 저장
+    analysis = SleepAnalysis(
+        session_id=session.id,
+        user_id=current_user.id,
+        analysis_type="disease_risk",
+        result_data={
+            "predictions": [p.dict() for p in predictions_data]
+        }
+    )
+    
+    db.add(analysis)
+    db.commit()
+    db.refresh(analysis)
+    
+    logger.info(f"Disease risk analysis saved: ID {analysis.id}")
+    
+    # 4. 응답 반환
+    return DiseaseRiskResponse(
+        analysis_id=analysis.id,
+        session_id=session.id,
+        predictions=predictions_data,
+        created_at=analysis.created_at
+    )
+
+
+def _perform_disease_risk_analysis(session: SleepSession) -> List[DiseasePrediction]:
+    """
+    실제 질병 위험 분석 수행
+    
+    Args:
+        session: 분석할 수면 세션
+    
+    Returns:
+        DiseasePrediction 리스트
+    """
+    import torch
+    from app.ml.models.disease_risk import (
+        DiseaseRiskPredictor,
+        DISEASE_NAMES,
+        DISEASE_NAMES_KO,
+        categorize_risk,
+        get_disease_recommendations,
+    )
+    
+    # 실제 예측기 생성
+    predictor = DiseaseRiskPredictor(embedding_dim=512)
+    predictor.eval()
+    
+    # 더미 임베딩 생성 (실제로는 세션 데이터 → SleepFM 임베딩)
+    # TODO: 실제 센서 데이터 로딩 및 임베딩 생성
+    duration_minutes = (session.duration_hours or 8) * 60
+    num_epochs = int(duration_minutes / 0.5)
+    
+    # 세션의 모든 에포크 임베딩을 평균하여 단일 임베딩 생성
+    dummy_embeddings = torch.randn(num_epochs, 512)
+    session_embedding = dummy_embeddings.mean(dim=0, keepdim=True)  # (1, 512)
+    
+    # Monte Carlo Dropout으로 신뢰 구간 포함 예측
+    with torch.no_grad():
+        result = predictor.predict_with_confidence(
+            session_embedding,
+            confidence_level=0.95,
+            num_samples=50  # 빠른 응답을 위해 샘플 수 줄임
+        )
+    
+    risk_scores = result["risk_scores"].squeeze(0).numpy()  # (5,)
+    lower_bounds = result["confidence_lower"].squeeze(0).numpy()  # (5,)
+    upper_bounds = result["confidence_upper"].squeeze(0).numpy()  # (5,)
+    
+    # 예측 결과 생성
+    predictions = []
+    for i, disease in enumerate(DISEASE_NAMES):
+        score = float(risk_scores[i])
+        category = categorize_risk(score)
+        
+        # 권장사항 (High 카테고리만)
+        recommendations = None
+        if category == "High":
+            recommendations = get_disease_recommendations(disease, category)
+        
+        prediction = DiseasePrediction(
+            disease=disease,
+            disease_name_ko=DISEASE_NAMES_KO[disease],
+            risk_score=score,
+            category=category,
+            confidence_interval=ConfidenceInterval(
+                lower=float(lower_bounds[i]),
+                upper=float(upper_bounds[i])
+            ),
+            recommendations=recommendations
+        )
+        predictions.append(prediction)
+    
+    return predictions
+
+
+# ============================================================
+# Story 4.3: 통합 분석 API
+# ============================================================
+
+@router.post("", status_code=status.HTTP_200_OK)
+def analyze_integrated(
+    request: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    통합 분석 수행 (Story 4.3)
+    
+    모든 분석(수면 요약, 수면 단계, 무호흡, 질병 위험)을 한 번에 수행합니다.
+    
+    Args:
+        request: {"session_id": int, "analysis_types": Optional[List[str]]}
+        db: 데이터베이스 세션
+        current_user: 현재 인증된 사용자
+    
+    Returns:
+        통합 분석 결과
+    """
+    from datetime import datetime
+    from app.schemas.disease_risk import IntegratedAnalysisRequest
+    
+    # 요청 파싱
+    session_id = request.get("session_id")
+    if not session_id:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="session_id is required"
+        )
+    
+    analysis_types = request.get("analysis_types")  # None이면 전체 분석
+    
+    # 1. 세션 조회
+    session = db.query(SleepSession).filter(
+        SleepSession.id == session_id
+    ).first()
+    
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Session not found: {session_id}"
+        )
+    
+    # 권한 확인
+    if session.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to analyze this session"
+        )
+    
+    logger.info(f"Starting integrated analysis for session {session.id}")
+    
+    # 분석할 타입 결정
+    all_types = ["sleep_stages", "apnea", "disease_risk"]
+    types_to_run = analysis_types if analysis_types else all_types
+    
+    # 결과 및 에러 저장
+    results = {}
+    errors = {}
+    
+    # 2. 수면 단계 분석
+    if "sleep_stages" in types_to_run:
+        try:
+            stages_data, summary_data = _perform_sleep_stage_analysis(session)
+            
+            # DB 저장
+            analysis = SleepAnalysis(
+                session_id=session.id,
+                user_id=current_user.id,
+                analysis_type="sleep_stage",
+                result_data={
+                    "stages": [s.model_dump() for s in stages_data],
+                    "summary": summary_data.model_dump()
+                }
+            )
+            db.add(analysis)
+            
+            results["sleep_stages"] = {
+                "stages": [s.model_dump() for s in stages_data[-10:]],  # 마지막 10개만 (축약)
+                "stage_durations": summary_data.stage_durations
+            }
+            results["sleep_summary"] = {
+                "total_time_minutes": summary_data.total_time_minutes,
+                "total_sleep_time_minutes": summary_data.total_sleep_time_minutes,
+                "sleep_efficiency": summary_data.sleep_efficiency,
+                "sleep_onset_latency": 15.0,  # 더미 값 (실제로는 계산)
+                "wake_after_sleep_onset": 30.0  # 더미 값
+            }
+        except Exception as e:
+            logger.error(f"Sleep stage analysis failed: {e}")
+            errors["sleep_stages"] = str(e)
+    
+    # 3. 무호흡 분석
+    if "apnea" in types_to_run:
+        try:
+            events_data, ahi, severity, recommendations = _perform_apnea_analysis(session)
+            
+            # DB 저장
+            analysis = SleepAnalysis(
+                session_id=session.id,
+                user_id=current_user.id,
+                analysis_type="apnea",
+                result_data={
+                    "events": [e.model_dump() for e in events_data],
+                    "ahi": ahi,
+                    "severity": severity,
+                    "recommendations": recommendations
+                }
+            )
+            db.add(analysis)
+            
+            results["apnea"] = {
+                "ahi": ahi,
+                "severity": severity,
+                "event_count": len(events_data),
+                "recommendations": recommendations
+            }
+        except Exception as e:
+            logger.error(f"Apnea analysis failed: {e}")
+            errors["apnea"] = str(e)
+    
+    # 4. 질병 위험 분석
+    if "disease_risk" in types_to_run:
+        try:
+            predictions_data = _perform_disease_risk_analysis(session)
+            
+            # DB 저장
+            analysis = SleepAnalysis(
+                session_id=session.id,
+                user_id=current_user.id,
+                analysis_type="disease_risk",
+                result_data={
+                    "predictions": [p.model_dump() for p in predictions_data]
+                }
+            )
+            db.add(analysis)
+            
+            results["disease_risk"] = {
+                "predictions": [p.model_dump() for p in predictions_data]
+            }
+        except Exception as e:
+            logger.error(f"Disease risk analysis failed: {e}")
+            errors["disease_risk"] = str(e)
+    
+    # 세션 상태 업데이트
+    if errors:
+        session.analysis_status = "partial" if results else "failed"
+    else:
+        session.analysis_status = "completed"
+    
+    db.commit()
+    
+    # 5. 응답 구성
+    analysis_status = "completed" if not errors else ("partial" if results else "failed")
+    
+    response = {
+        "session_id": session.id,
+        "analysis_status": analysis_status,
+        "created_at": datetime.utcnow().isoformat(),
+        **results
+    }
+    
+    if errors:
+        response["errors"] = errors
+    
+    logger.info(f"Integrated analysis completed: status={analysis_status}")
+    
+    return response
+
+
+@router.get("/{session_id}/status")
+def get_analysis_status(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    분석 상태 조회 (Story 4.3)
+    
+    Args:
+        session_id: 세션 ID
+        db: 데이터베이스 세션
+        current_user: 현재 인증된 사용자
+    
+    Returns:
+        분석 상태 정보
+    """
+    # 세션 조회
+    session = db.query(SleepSession).filter(
+        SleepSession.id == session_id
+    ).first()
+    
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Session not found: {session_id}"
+        )
+    
+    # 권한 확인
+    if session.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this session"
+        )
+    
+    # 완료된 분석 유형 조회
+    analyses = db.query(SleepAnalysis).filter_by(
+        session_id=session_id
+    ).all()
+    
+    completed_analyses = [a.analysis_type for a in analyses]
+    
+    return {
+        "session_id": session_id,
+        "status": session.analysis_status,
+        "completed_analyses": completed_analyses
+    }

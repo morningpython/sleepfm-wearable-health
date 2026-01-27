@@ -5,7 +5,23 @@ ML Models Package
 """
 
 from .heads import SleepStageClassifier
+from .disease_risk import (
+    DiseaseRiskPredictor,
+    CoxPHHead,
+    DISEASE_NAMES,
+    DISEASE_NAMES_KO,
+    categorize_risk,
+    categorize_risk_batch,
+    get_disease_recommendations,
+)
 
 __all__ = [
     "SleepStageClassifier",
+    "DiseaseRiskPredictor",
+    "CoxPHHead",
+    "DISEASE_NAMES",
+    "DISEASE_NAMES_KO",
+    "categorize_risk",
+    "categorize_risk_batch",
+    "get_disease_recommendations",
 ]

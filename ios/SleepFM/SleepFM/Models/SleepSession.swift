@@ -140,6 +140,9 @@ struct DiseasePrediction: Codable, Identifiable {
     let confidenceInterval: ConfidenceInterval
     let recommendations: [String]?
     
+    /// score 별칭 (riskScore와 동일)
+    var score: Double { riskScore }
+    
     enum CodingKeys: String, CodingKey {
         case disease
         case diseaseNameKo = "disease_name_ko"

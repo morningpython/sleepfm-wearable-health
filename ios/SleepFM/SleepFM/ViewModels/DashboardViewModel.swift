@@ -90,12 +90,109 @@ final class DashboardViewModel: ObservableObject {
     // MARK: - Private Methods
     
     private func loadLastSession() async throws {
-        // TODO: 실제 API 호출로 교체
-        // 현재는 더미 데이터 사용
+        // 실제 API 호출 시도
+        do {
+            guard let userId = await getCurrentUserId() else {
+                throw APIError.unauthorized
+            }
+            
+            let response = try await apiService.getSessions(userId: userId, limit: 1)
+            
+            if let latestSession = response.sessions.first, latestSession.hasResults {
+                // 세션 결과 가져오기
+                let results = try await apiService.getSessionResults(sessionId: latestSession.id)
+                updateFromSessionResults(results)
+            } else {
+                // 분석 결과 없으면 더미 데이터
+                loadDummySessionData()
+            }
+        } catch {
+            // API 실패 시 더미 데이터로 폴백
+            print("⚠️ API 호출 실패, 더미 데이터 사용: \(error)")
+            loadDummySessionData()
+        }
+    }
+    
+    private func getCurrentUserId() async -> Int? {
+        // AuthViewModel에서 현재 사용자 ID 가져오기
+        return AuthViewModel.shared.currentUser?.id
+    }
+    
+    private func updateFromSessionResults(_ results: SessionResultsResponse) {
+        // 분석 결과에서 데이터 추출
+        for analysis in results.analyses {
+            switch analysis.type {
+            case "sleep_stages":
+                if let stageDurationsDict = analysis.result["stage_durations"]?.value as? [String: Double] {
+                    stageDurations = parseStageDurations(stageDurationsDict)
+                }
+                
+            case "sleep_summary":
+                if let efficiency = analysis.result["sleep_efficiency"]?.value as? Double {
+                    sleepEfficiency = efficiency
+                }
+                if let totalMinutes = analysis.result["total_sleep_time_minutes"]?.value as? Double {
+                    totalSleepTime = totalMinutes * 60
+                }
+                
+            case "disease_risk":
+                // 질병 위험 분석은 별도 처리
+                break
+                
+            default:
+                break
+            }
+        }
         
-        // 시뮬레이션 딜레이
-        try await Task.sleep(nanoseconds: 500_000_000)
+        // 세션 날짜로 시간 설정
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        if let sessionDate = dateFormatter.date(from: results.sessionDate) {
+            bedTime = Calendar.current.date(bySettingHour: 23, minute: 0, second: 0, of: sessionDate)
+            if let duration = results.durationHours {
+                wakeTime = bedTime?.addingTimeInterval(duration * 3600)
+            }
+        }
         
+        // 수면 점수 계산 (효율 기반)
+        sleepScore = calculateSleepScore()
+        
+        // 차트 데이터 생성
+        generateSleepStageChartData()
+    }
+    
+    private func parseStageDurations(_ dict: [String: Double]) -> [SleepStage: TimeInterval] {
+        var result: [SleepStage: TimeInterval] = [:]
+        
+        for (key, minutes) in dict {
+            let stage: SleepStage
+            switch key.lowercased() {
+            case "n3", "deep": stage = .n3
+            case "n2", "light": stage = .n2
+            case "n1": stage = .n1
+            case "rem": stage = .rem
+            case "wake", "awake": stage = .wake
+            default: continue
+            }
+            result[stage] = minutes * 60 // 분 -> 초
+        }
+        
+        return result
+    }
+    
+    private func calculateSleepScore() -> Double {
+        // 수면 점수 = 효율 * 0.4 + 깊은수면비율 * 0.3 + REM비율 * 0.3
+        let totalStageTime = stageDurations.values.reduce(0, +)
+        guard totalStageTime > 0 else { return sleepEfficiency }
+        
+        let deepRatio = (stageDurations[.n3] ?? 0) / totalStageTime
+        let remRatio = (stageDurations[.rem] ?? 0) / totalStageTime
+        
+        let score = sleepEfficiency * 0.4 + (deepRatio * 100) * 0.3 + (remRatio * 100) * 0.3
+        return min(100, max(0, score))
+    }
+    
+    private func loadDummySessionData() {
         // 더미 데이터 설정
         let now = Date()
         let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now)!
@@ -170,8 +267,47 @@ final class DashboardViewModel: ObservableObject {
     }
     
     private func loadDiseaseRisks() async throws {
-        // TODO: 실제 API 호출로 교체
-        
+        // 실제 API에서 마지막 세션의 질병 위험 가져오기
+        do {
+            guard let userId = await getCurrentUserId() else {
+                loadDummyDiseaseRisks()
+                return
+            }
+            
+            let sessions = try await apiService.getSessions(userId: userId, limit: 1)
+            
+            if let latestSession = sessions.sessions.first {
+                let riskResponse = try await apiService.analyzeDiseaseRisk(sessionId: latestSession.id)
+                diseaseRisks = riskResponse.predictions.map { prediction in
+                    DiseaseRiskItem(
+                        disease: prediction.disease,
+                        diseaseNameKo: diseaseNameInKorean(prediction.disease),
+                        score: prediction.score,
+                        category: RiskCategory(from: prediction.category),
+                        trend: .stable // 트렌드는 히스토리에서 계산 필요
+                    )
+                }
+            } else {
+                loadDummyDiseaseRisks()
+            }
+        } catch {
+            print("⚠️ 질병 위험 API 호출 실패, 더미 데이터 사용: \(error)")
+            loadDummyDiseaseRisks()
+        }
+    }
+    
+    private func diseaseNameInKorean(_ disease: String) -> String {
+        switch disease.lowercased() {
+        case "parkinsons", "parkinson": return "파킨슨병"
+        case "dementia", "alzheimer": return "치매"
+        case "myocardial_infarction", "heart_attack": return "심근경색"
+        case "heart_failure": return "심부전"
+        case "stroke": return "뇌졸중"
+        default: return disease
+        }
+    }
+    
+    private func loadDummyDiseaseRisks() {
         // 더미 데이터
         diseaseRisks = [
             DiseaseRiskItem(

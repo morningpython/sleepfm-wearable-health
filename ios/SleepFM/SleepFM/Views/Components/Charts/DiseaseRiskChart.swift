@@ -62,6 +62,17 @@ enum RiskCategory: String, Codable {
     case high = "High"
     case veryHigh = "Very High"
     
+    /// API 응답 문자열에서 초기화
+    init(from string: String) {
+        switch string.lowercased() {
+        case "low", "낮음": self = .low
+        case "moderate", "보통": self = .moderate
+        case "high", "높음": self = .high
+        case "very high", "veryhigh", "매우 높음": self = .veryHigh
+        default: self = RiskCategory.fromScore(0)
+        }
+    }
+    
     var label: String {
         switch self {
         case .low: return "낮음"

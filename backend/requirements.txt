@@ -20,3 +20,7 @@ python-json-logger
 prometheus-client
 sentry-sdk[fastapi]
 psutil
+# Sprint 11: 성능 최적화
+redis
+celery[redis]
+locust

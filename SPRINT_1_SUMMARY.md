@@ -165,38 +165,49 @@ curl -X POST http://localhost:8000/api/v1/auth/token \
 | 8 | 보안 강화 | #7 | ✅ 완료 |
 | 9 | 통합 테스트 및 CI/CD | #8 | ✅ 완료 |
 | 10 | E2E 통합 및 모니터링 | #9 | ✅ 완료 |
+| 11 | 성능 최적화 및 보안 | #10 | ✅ 완료 |
 
 ---
 
-## 🎯 Sprint 10 주요 성과 (최신)
+## 🎯 Sprint 11 주요 성과 (최신)
 
-### 테스트 스위트 추가
-- **test_database_integrity.py** (14개 테스트)
-  - FK 제약조건, 트랜잭션 롤백, 벌크 작업
-  - 데이터 타입 검증, 쿼리 성능 테스트
-- **test_api_integration_suite.py** (29개 테스트)
-  - 인증, 세션, 분석, 히스토리, 헬스 엔드포인트
-  - 응답 스키마 검증, 응답 시간 측정
-- **test_cross_platform_consistency.py** (12개 테스트)
-  - 결정론적 전처리, 분석 일관성, 부동소수점 정밀도
+### 성능 최적화
+- **Redis 캐싱 레이어** (app/cache/)
+  - 비동기 Redis 클라이언트 구현
+  - 캐시 데코레이터 및 유틸리티
+  - 분석 결과 캐싱 (TTL 1시간)
+- **DB 인덱스 최적화** (migrations/versions/add_performance_indexes.py)
+  - users, sleep_sessions, sleep_analyses 테이블 인덱스
+  - 복합 인덱스 (user_id + session_date)
+- **Celery 비동기 작업 큐** (app/tasks/)
+  - 분석 태스크 비동기 처리
+  - 알림 태스크 분리
 
-### 모니터링 인프라 구축
-- **Prometheus 메트릭** (app/monitoring/prometheus.py)
-  - 요청 카운터, 레이턴시 히스토그램
-  - CPU/메모리/디스크 시스템 메트릭
-- **Sentry 에러 추적** (app/monitoring/sentry.py)
-  - FastAPI, SQLAlchemy 인테그레이션
-  - 민감 데이터 필터링
+### 보안 강화
+- **보안 미들웨어** (app/middleware/security.py)
+  - Rate Limiting (100 req/min)
+  - 입력 검증 및 Sanitization
+  - OWASP 보안 헤더 적용
+  - XSS, SQL Injection 방어
+- **GDPR API** (app/routes/privacy.py)
+  - 데이터 내보내기 (JSON)
+  - 데이터 삭제 요청
+  - 동의 관리
+
+### 부하 테스트
+- **Locust 테스트** (tests/load/locustfile.py)
+  - 인증, 세션, 분석 엔드포인트
+  - 동시 사용자 처리 테스트
 
 ### 의존성 추가
-- prometheus-client, sentry-sdk[fastapi], psutil
+- redis, celery[redis], locust
 
 ### 테스트 결과
 - **468 passed, 9 skipped**
 
 ---
 
-## 🏁 Sprint 10 완료!
+## 🏁 Sprint 11 완료!
 
-Sprint 10이 성공적으로 완료되었습니다.  
-다음 Sprint 11에서는 성능 최적화를 진행할 예정입니다.
+Sprint 11이 성공적으로 완료되었습니다.  
+다음 Sprint 12에서는 베타 테스트 및 배포 준비를 진행할 예정입니다.

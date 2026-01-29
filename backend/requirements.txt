@@ -17,3 +17,6 @@ pandas
 boto3
 python-dotenv
 python-json-logger
+prometheus-client
+sentry-sdk[fastapi]
+psutil

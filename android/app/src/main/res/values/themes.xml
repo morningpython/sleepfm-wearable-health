@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base Theme -->
+    <style name="Theme.SleepFM" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Status bar color -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+    
+    <!-- Splash Screen Theme -->
+    <style name="Theme.SleepFM.Splash" parent="Theme.SleepFM">
+        <item name="android:windowBackground">@color/splash_background</item>
+    </style>
+</resources>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+  <group android:scaleX="0.3"
+      android:scaleY="0.3"
+      android:translateX="37.8"
+      android:translateY="37.8">
+    <!-- Moon shape -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,10C29.7,10 10,29.7 10,54s19.7,44 44,44c3.8,0 7.5,-0.5 11,-1.4C53.3,90.5 45,74.3 45,56c0,-22.1 17.9,-40 40,-40c2.1,0 4.2,0.2 6.2,0.5C83.5,14.5 69.5,10 54,10z"/>
+    <!-- Star -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M85,25l3,9h9l-7,5 3,9 -8,-6 -8,6 3,-9 -7,-5h9z"/>
+  </group>
+</vector>

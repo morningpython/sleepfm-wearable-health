@@ -166,48 +166,57 @@ curl -X POST http://localhost:8000/api/v1/auth/token \
 | 9 | 통합 테스트 및 CI/CD | #8 | ✅ 완료 |
 | 10 | E2E 통합 및 모니터링 | #9 | ✅ 완료 |
 | 11 | 성능 최적화 및 보안 | #10 | ✅ 완료 |
+| 12 | 베타 배포 준비 | #11 | ✅ 완료 |
+
+### 🔜 예정된 스프린트 (Phase 4: Android)
+| Sprint | 제목 | 상태 |
+|--------|------|------|
+| 13 | Android 앱 기반 구조 | ⏳ 대기 |
+| 14 | Wear OS 및 통합 | ⏳ 대기 |
 
 ---
 
-## 🎯 Sprint 11 주요 성과 (최신)
+## 🎯 Sprint 12 주요 성과 (최신)
 
-### 성능 최적화
-- **Redis 캐싱 레이어** (app/cache/)
-  - 비동기 Redis 클라이언트 구현
-  - 캐시 데코레이터 및 유틸리티
-  - 분석 결과 캐싱 (TTL 1시간)
-- **DB 인덱스 최적화** (migrations/versions/add_performance_indexes.py)
-  - users, sleep_sessions, sleep_analyses 테이블 인덱스
-  - 복합 인덱스 (user_id + session_date)
-- **Celery 비동기 작업 큐** (app/tasks/)
-  - 분석 태스크 비동기 처리
-  - 알림 태스크 분리
+### CI/CD Pipeline
+- **GitHub Actions 워크플로우** (.github/workflows/backend-ci.yml)
+  - Lint Job: ruff, black, isort, mypy
+  - Test Job: pytest with PostgreSQL/Redis services
+  - Security Job: safety, bandit, pip-audit
+  - Build Job: Docker multi-platform (amd64, arm64)
+  - Deploy Jobs: staging/production 자동 배포
+- Codecov 커버리지 리포팅
+- Slack 배포 알림
 
-### 보안 강화
-- **보안 미들웨어** (app/middleware/security.py)
-  - Rate Limiting (100 req/min)
-  - 입력 검증 및 Sanitization
-  - OWASP 보안 헤더 적용
-  - XSS, SQL Injection 방어
-- **GDPR API** (app/routes/privacy.py)
-  - 데이터 내보내기 (JSON)
-  - 데이터 삭제 요청
-  - 동의 관리
+### 배포 인프라
+- **Multi-stage Dockerfile**
+  - builder, production, development 스테이지
+  - Non-root user (보안)
+  - Health check 설정
+- **docker-compose.yml 업데이트**
+  - Backend API, Redis, Celery, Prometheus, Grafana
+- **docker-compose.prod.yml (프로덕션용)**
+  - 리소스 제한 설정
+  - Nginx reverse proxy
 
-### 부하 테스트
-- **Locust 테스트** (tests/load/locustfile.py)
-  - 인증, 세션, 분석 엔드포인트
-  - 동시 사용자 처리 테스트
+### Nginx 설정
+- SSL/TLS 설정
+- Rate Limiting
+- Security Headers (HSTS, CSP, X-Frame-Options)
 
-### 의존성 추가
-- redis, celery[redis], locust
+### 문서화
+- **OpenAPI 문서 강화** - API 설명, 태그, 연락처 정보
+- **Developer Guide** (docs/DEVELOPER_GUIDE.md)
+- **Deployment Checklist** (docs/DEPLOYMENT_CHECKLIST.md)
 
 ### 테스트 결과
 - **468 passed, 9 skipped**
 
 ---
 
-## 🏁 Sprint 11 완료!
+## 🏁 Phase 1-3 완료!
 
-Sprint 11이 성공적으로 완료되었습니다.  
-다음 Sprint 12에서는 베타 테스트 및 배포 준비를 진행할 예정입니다.
+Sprint 12가 성공적으로 완료되어 **백엔드 및 iOS/watchOS 개발이 모두 완료**되었습니다.
+
+다음 **Phase 4 (Sprint 13-14)**에서는 Android/Wear OS 앱 개발을 진행합니다.  
+상세 계획은 `docs/SPRINT_PLAN_PHASE4.md` 참조.

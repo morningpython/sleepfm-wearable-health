@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SleepFM</string>
+    
+    <!-- Common -->
+    <string name="loading">로딩 중...</string>
+    <string name="error">오류</string>
+    <string name="retry">다시 시도</string>
+    <string name="cancel">취소</string>
+    <string name="ok">확인</string>
+    <string name="save">저장</string>
+    <string name="delete">삭제</string>
+    <string name="next">다음</string>
+    <string name="previous">이전</string>
+    <string name="skip">건너뛰기</string>
+    <string name="done">완료</string>
+    <string name="close">닫기</string>
+    
+    <!-- Auth -->
+    <string name="login">로그인</string>
+    <string name="signup">회원가입</string>
+    <string name="logout">로그아웃</string>
+    <string name="email">이메일</string>
+    <string name="password">비밀번호</string>
+    <string name="confirm_password">비밀번호 확인</string>
+    <string name="username">사용자 이름</string>
+    <string name="forgot_password">비밀번호 찾기</string>
+    <string name="no_account">계정이 없으신가요?</string>
+    <string name="have_account">이미 계정이 있으신가요?</string>
+    <string name="login_error">로그인에 실패했습니다</string>
+    <string name="signup_error">회원가입에 실패했습니다</string>
+    <string name="password_mismatch">비밀번호가 일치하지 않습니다</string>
+    <string name="password_too_short">비밀번호는 8자 이상이어야 합니다</string>
+    <string name="invalid_email">유효한 이메일을 입력해주세요</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">수면을 분석하세요</string>
+    <string name="onboarding_desc_1">스마트워치를 착용하고 잠들면 자동으로 수면 데이터를 수집합니다</string>
+    <string name="onboarding_title_2">AI 기반 수면 단계 분석</string>
+    <string name="onboarding_desc_2">딥러닝 모델이 심박수, 산소포화도, 움직임 데이터를 분석하여 수면 단계를 정확히 파악합니다</string>
+    <string name="onboarding_title_3">건강 위험도 예측</string>
+    <string name="onboarding_desc_3">수면 패턴을 기반으로 수면무호흡증, 불면증 등 잠재적 건강 위험을 예측합니다</string>
+    <string name="onboarding_title_4">Health Connect 연동</string>
+    <string name="onboarding_desc_4">Google Health Connect와 연동하여 다양한 건강 앱의 데이터를 통합 분석할 수 있습니다</string>
+    <string name="get_started">시작하기</string>
+    
+    <!-- Navigation -->
+    <string name="nav_dashboard">대시보드</string>
+    <string name="nav_history">기록</string>
+    <string name="nav_settings">설정</string>
+    
+    <!-- Dashboard -->
+    <string name="sleep_dashboard">수면 대시보드</string>
+    <string name="today_sleep_score">오늘의 수면 점수</string>
+    <string name="last_night_sleep">어젯밤 수면</string>
+    <string name="bed_time">취침</string>
+    <string name="wake_time">기상</string>
+    <string name="sleep_duration">수면 시간</string>
+    <string name="sleep_efficiency">수면 효율</string>
+    <string name="sleep_stages">수면 단계</string>
+    <string name="health_risk">건강 위험도</string>
+    <string name="quick_actions">빠른 작업</string>
+    <string name="sync_data">데이터 동기화</string>
+    <string name="no_sleep_data">수면 데이터가 없습니다</string>
+    <string name="wear_device_hint">Wear OS 앱을 착용하고 수면을 시작하세요</string>
+    
+    <!-- Sleep Stages -->
+    <string name="stage_wake">깨어있음</string>
+    <string name="stage_light">얕은 수면</string>
+    <string name="stage_deep">깊은 수면</string>
+    <string name="stage_rem">REM 수면</string>
+    
+    <!-- Sleep Quality -->
+    <string name="quality_excellent">매우 좋음</string>
+    <string name="quality_good">좋음</string>
+    <string name="quality_fair">보통</string>
+    <string name="quality_poor">나쁨</string>
+    
+    <!-- Risk Level -->
+    <string name="risk_low">낮음</string>
+    <string name="risk_moderate">보통</string>
+    <string name="risk_high">높음</string>
+    
+    <!-- Disease Names -->
+    <string name="disease_sleep_apnea">수면무호흡증</string>
+    <string name="disease_insomnia">불면증</string>
+    <string name="disease_restless_leg">하지불안증후군</string>
+    <string name="disease_narcolepsy">기면증</string>
+    
+    <!-- History -->
+    <string name="sleep_history">수면 기록</string>
+    <string name="no_history">수면 기록이 없습니다</string>
+    <string name="history_hint">수면을 추적하면 여기에 기록이 표시됩니다</string>
+    
+    <!-- Settings -->
+    <string name="settings">설정</string>
+    <string name="app_settings">앱 설정</string>
+    <string name="notification_settings">알림 설정</string>
+    <string name="notification_settings_desc">수면 알림 및 리마인더</string>
+    <string name="dark_mode">다크 모드</string>
+    <string name="enabled">활성화됨</string>
+    <string name="disabled">비활성화됨</string>
+    <string name="health_connect">Health Connect</string>
+    <string name="health_connect_link">Health Connect 연동</string>
+    <string name="linked">연동됨</string>
+    <string name="not_linked">연동 안됨</string>
+    <string name="last_sync">마지막 동기화</string>
+    <string name="never_synced">없음</string>
+    <string name="account">계정</string>
+    <string name="privacy_policy">개인정보 처리방침</string>
+    <string name="terms_of_service">이용약관</string>
+    <string name="app_info">앱 정보</string>
+    <string name="version">버전</string>
+    <string name="logout_confirm">정말 로그아웃 하시겠습니까?</string>
+    
+    <!-- Score Messages -->
+    <string name="score_excellent">훌륭한 수면이었습니다! 🌟</string>
+    <string name="score_good">좋은 수면입니다 😊</string>
+    <string name="score_fair">괜찮은 수면이었습니다</string>
+    <string name="score_needs_improvement">개선이 필요합니다</string>
+    <string name="score_check_pattern">수면 패턴을 점검해 보세요</string>
+    
+    <!-- Time Format -->
+    <string name="hours_minutes">%1$d시간 %2$d분</string>
+    <string name="minutes_only">%1$d분</string>
+    
+    <!-- Health Connect Permissions -->
+    <string name="permission_heart_rate">심박수</string>
+    <string name="permission_spo2">산소포화도</string>
+    <string name="permission_sleep">수면</string>
+    <string name="permission_steps">걸음 수</string>
+    
+    <!-- Health Connect Rationale -->
+    <string name="health_permissions_rationale">SleepFM은 수면 분석과 건강 위험도 예측을 위해 Health Connect에서 수면, 심박수, 산소포화도 데이터를 읽습니다.</string>
+    
+    <!-- Health Permissions Array -->
+    <string-array name="health_permissions">
+        <item>android.permission.health.READ_SLEEP</item>
+        <item>android.permission.health.READ_HEART_RATE</item>
+        <item>android.permission.health.READ_OXYGEN_SATURATION</item>
+        <item>android.permission.health.READ_STEPS</item>
+    </string-array>
+</resources>

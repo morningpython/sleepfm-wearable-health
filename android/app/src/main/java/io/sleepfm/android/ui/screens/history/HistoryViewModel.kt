@@ -92,7 +92,7 @@ class HistoryViewModel @Inject constructor(
         viewModelScope.launch {
             sleepRepository.allSessions.collect { localSessions ->
                 val historySessions = localSessions.map { entity ->
-                    val durationMinutes = entity.durationMinutes ?: 0
+                    val durationMinutes = entity.duration ?: 0
                     
                     HistorySession(
                         id = entity.id,

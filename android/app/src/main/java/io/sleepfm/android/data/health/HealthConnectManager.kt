@@ -67,9 +67,9 @@ class HealthConnectManager @Inject constructor(
     }
     
     /**
-     * Create permission request contract
+     * Get permission controller for requesting permissions
      */
-    fun createPermissionRequestContract(): PermissionController.PermissionLauncher {
+    fun getPermissionController(): PermissionController {
         return healthConnectClient.permissionController
     }
     

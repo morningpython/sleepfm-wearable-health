@@ -5,9 +5,9 @@ minSdk = "28"
 targetSdk = "34"
 
 # Kotlin & Core
-kotlin = "1.9.22"
+kotlin = "2.0.0"
 agp = "8.2.2"
-ksp = "1.9.22-1.0.17"
+ksp = "2.0.0-1.0.21"
 coreKtx = "1.12.0"
 coroutines = "1.7.3"
 
@@ -32,6 +32,12 @@ datastore = "1.0.0"
 
 # Health Connect
 healthConnect = "1.1.0-alpha07"
+
+# Wear OS
+wearCompose = "1.3.0"
+wear = "1.3.0"
+healthServices = "1.0.0-rc01"
+playServicesWearable = "18.1.0"
 
 # Testing
 junit = "4.13.2"
@@ -88,6 +94,16 @@ datastore-preferences = { group = "androidx.datastore", name = "datastore-prefer
 
 # Health Connect
 health-connect = { group = "androidx.health.connect", name = "connect-client", version.ref = "healthConnect" }
+
+# Wear OS
+wear = { group = "androidx.wear", name = "wear", version.ref = "wear" }
+wear-compose-material = { group = "androidx.wear.compose", name = "compose-material", version.ref = "wearCompose" }
+wear-compose-foundation = { group = "androidx.wear.compose", name = "compose-foundation", version.ref = "wearCompose" }
+wear-compose-navigation = { group = "androidx.wear.compose", name = "compose-navigation", version.ref = "wearCompose" }
+health-services-client = { group = "androidx.health", name = "health-services-client", version.ref = "healthServices" }
+play-services-wearable = { group = "com.google.android.gms", name = "play-services-wearable", version.ref = "playServicesWearable" }
+kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
+lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-service", version.ref = "lifecycleRuntimeCompose" }
 
 # Logging
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SleepFM</string>
+    
+    <!-- 홈 화면 -->
+    <string name="home_ready_to_track">수면 추적을 시작할\n준비가 되었습니다</string>
+    <string name="home_start_tracking">수면 추적 시작</string>
+    <string name="home_tracking_active">수면 추적 중</string>
+    <string name="home_view_details">자세히 보기</string>
+    <string name="home_settings">설정</string>
+    <string name="home_history">기록</string>
+    
+    <!-- 수면 추적 화면 -->
+    <string name="tracking_title">수면 추적 중</string>
+    <string name="tracking_elapsed_time">경과 시간</string>
+    <string name="tracking_heart_rate">심박수</string>
+    <string name="tracking_spo2">산소포화도</string>
+    <string name="tracking_stop">추적 중지</string>
+    <string name="tracking_unit_bpm">bpm</string>
+    <string name="tracking_unit_percent">%</string>
+    <string name="tracking_no_data">--</string>
+    
+    <!-- 수면 요약 화면 -->
+    <string name="summary_title">수면 요약</string>
+    <string name="summary_total_sleep">총 수면 시간</string>
+    <string name="summary_sleep_score">수면 점수</string>
+    <string name="summary_deep_sleep">깊은 수면</string>
+    <string name="summary_light_sleep">얕은 수면</string>
+    <string name="summary_rem_sleep">REM 수면</string>
+    <string name="summary_awake">깨어있음</string>
+    <string name="summary_avg_heart_rate">평균 심박수</string>
+    <string name="summary_min_spo2">최저 산소포화도</string>
+    <string name="summary_done">완료</string>
+    <string name="summary_sync_to_phone">폰으로 동기화</string>
+    <string name="summary_hours_minutes">%1$d시간 %2$d분</string>
+    <string name="summary_sync_success">동기화 완료</string>
+    <string name="summary_sync_failed">동기화 실패</string>
+    
+    <!-- 설정 화면 -->
+    <string name="settings_title">설정</string>
+    <string name="settings_auto_tracking">자동 수면 추적</string>
+    <string name="settings_auto_tracking_desc">취침 시간에 자동으로 시작</string>
+    <string name="settings_auto_sync">자동 동기화</string>
+    <string name="settings_auto_sync_desc">추적 종료 시 폰으로 자동 동기화</string>
+    <string name="settings_haptic">진동 피드백</string>
+    <string name="settings_haptic_desc">버튼 터치 시 진동</string>
+    <string name="settings_always_on">항상 켜진 화면</string>
+    <string name="settings_always_on_desc">추적 중 화면 유지</string>
+    <string name="settings_about">앱 정보</string>
+    <string name="settings_version">버전</string>
+    
+    <!-- 알림 -->
+    <string name="notification_channel_name">수면 추적</string>
+    <string name="notification_channel_desc">수면 추적 중 알림</string>
+    <string name="notification_tracking_title">수면 추적 중</string>
+    <string name="notification_tracking_text">SleepFM이 수면을 분석하고 있습니다</string>
+    <string name="notification_tracking_stop">추적 중지</string>
+    
+    <!-- 타일 -->
+    <string name="tile_title">SleepFM</string>
+    <string name="tile_tracking">수면 추적 중</string>
+    <string name="tile_last_sleep">지난 밤 수면</string>
+    <string name="tile_tap_to_check">탭하여 확인</string>
+    <string name="tile_tap_to_start">탭하여 시작</string>
+    
+    <!-- 컴플리케이션 -->
+    <string name="complication_label">SleepFM 수면</string>
+    <string name="complication_short_desc">수면 시간</string>
+    <string name="complication_long_desc">지난 밤 수면 시간 표시</string>
+    
+    <!-- 에러 메시지 -->
+    <string name="error_phone_not_connected">폰이 연결되지 않았습니다</string>
+    <string name="error_sensor_unavailable">센서를 사용할 수 없습니다</string>
+    <string name="error_tracking_failed">추적을 시작할 수 없습니다</string>
+    <string name="error_sync_failed">동기화에 실패했습니다</string>
+    
+    <!-- 공통 -->
+    <string name="ok">확인</string>
+    <string name="cancel">취소</string>
+    <string name="retry">다시 시도</string>
+</resources>

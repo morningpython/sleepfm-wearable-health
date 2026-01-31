@@ -5,7 +5,6 @@ import io.sleepfm.android.data.local.SleepDatabase
 import io.sleepfm.android.data.local.entity.SleepSessionEntity
 import io.sleepfm.android.domain.model.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -21,26 +20,33 @@ class SleepRepository @Inject constructor(
     
     // Local data flows
     val allSessions: Flow<List<SleepSessionEntity>> = dao.getAllSessions()
-    val latestSession: Flow<SleepSessionEntity?> = dao.getLatestSession()
     
     // Remote API calls
     suspend fun syncSession(request: SyncRequest): Result<SleepSession> {
         return try {
-            val session = api.syncSession(request)
-            // Save to local database
-            saveSessionToLocal(session)
-            Result.success(session)
+            val response = api.syncSession(request)
+            if (response.isSuccessful && response.body() != null) {
+                val session = response.body()!!
+                saveSessionToLocal(session)
+                Result.success(session)
+            } else {
+                Result.failure(Exception("Sync failed: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
     
-    suspend fun getHistory(startDate: String? = null, endDate: String? = null): Result<List<SleepSession>> {
+    suspend fun getHistory(days: Int = 30): Result<List<SleepSession>> {
         return try {
-            val sessions = api.getHistory(startDate, endDate)
-            // Cache sessions locally
-            sessions.forEach { saveSessionToLocal(it) }
-            Result.success(sessions)
+            val response = api.getHistory(days)
+            if (response.isSuccessful && response.body() != null) {
+                val sessions = response.body()!!
+                sessions.forEach { session -> saveSessionToLocal(session) }
+                Result.success(sessions)
+            } else {
+                Result.failure(Exception("Failed to get history: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -48,8 +54,12 @@ class SleepRepository @Inject constructor(
     
     suspend fun getSession(sessionId: Int): Result<SleepSession> {
         return try {
-            val session = api.getSession(sessionId)
-            Result.success(session)
+            val response = api.getSession(sessionId)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception("Failed to get session: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -57,8 +67,12 @@ class SleepRepository @Inject constructor(
     
     suspend fun analyzeSession(sessionId: Int): Result<AnalysisResponse> {
         return try {
-            val analysis = api.analyzeSession(sessionId)
-            Result.success(analysis)
+            val response = api.getAnalysis(sessionId)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception("Failed to analyze: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -66,8 +80,25 @@ class SleepRepository @Inject constructor(
     
     suspend fun predictDiseaseRisk(sessionId: Int): Result<DiseaseRiskResponse> {
         return try {
-            val risk = api.predictDiseaseRisk(sessionId)
-            Result.success(risk)
+            val response = api.getDiseaseRisk(sessionId)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception("Failed to predict: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun getLatestSession(): Result<SleepSession> {
+        return try {
+            val response = api.getLatestSession()
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception("Failed to get latest: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -78,8 +109,12 @@ class SleepRepository @Inject constructor(
         return dao.getSessionById(sessionId)
     }
     
+    suspend fun getLatestLocalSession(): SleepSessionEntity? {
+        return dao.getLatestSession()
+    }
+    
     suspend fun deleteLocalSession(session: SleepSessionEntity) {
-        dao.delete(session)
+        dao.deleteSession(session.id)
     }
     
     private suspend fun saveSessionToLocal(session: SleepSession) {
@@ -88,11 +123,13 @@ class SleepRepository @Inject constructor(
             userId = session.userId,
             startTime = parseDate(session.startTime),
             endTime = session.endTime?.let { parseDate(it) },
-            durationMinutes = session.durationMinutes,
+            duration = session.durationMinutes,
             sleepQuality = session.sleepQuality,
-            efficiency = session.efficiency
+            efficiency = session.efficiency,
+            syncedAt = Date(),
+            createdAt = Date()
         )
-        dao.insert(entity)
+        dao.insertSession(entity)
     }
     
     private fun parseDate(dateString: String): Date {

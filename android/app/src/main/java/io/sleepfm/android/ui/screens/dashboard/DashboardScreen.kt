@@ -266,25 +266,25 @@ private fun SleepStagesCard(
                 label = "깨어있음",
                 minutes = wakeMinutes,
                 total = total,
-                color = SleepStageWake
+                color = SleepWake
             )
             StageBar(
                 label = "얕은 수면",
                 minutes = lightMinutes,
                 total = total,
-                color = SleepStageLight
+                color = SleepLight
             )
             StageBar(
                 label = "깊은 수면",
                 minutes = deepMinutes,
                 total = total,
-                color = SleepStageDeep
+                color = SleepDeep
             )
             StageBar(
                 label = "REM 수면",
                 minutes = remMinutes,
                 total = total,
-                color = SleepStageREM
+                color = SleepREM
             )
         }
     }

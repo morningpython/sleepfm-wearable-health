@@ -31,7 +31,8 @@ class SettingsViewModel @Inject constructor(
     
     private fun loadUserInfo() {
         viewModelScope.launch {
-            authRepository.currentUser.collect { user ->
+            // Try to get user info from API
+            authRepository.getMe().onSuccess { user ->
                 _uiState.update { it.copy(user = user) }
             }
         }

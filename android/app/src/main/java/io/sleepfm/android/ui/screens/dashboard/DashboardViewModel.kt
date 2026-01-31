@@ -83,40 +83,39 @@ class DashboardViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true) }
             
             // Load latest session from local database
-            sleepRepository.latestSession.collect { session ->
-                if (session != null) {
-                    val hours = (session.durationMinutes ?: 0) / 60
-                    val minutes = (session.durationMinutes ?: 0) % 60
-                    
-                    val score = calculateSleepScore(
-                        session.sleepQuality ?: 0f,
-                        session.efficiency ?: 0f
+            val session = sleepRepository.getLatestLocalSession()
+            if (session != null) {
+                val hours = (session.duration ?: 0) / 60
+                val minutes = (session.duration ?: 0) % 60
+                
+                val score = calculateSleepScore(
+                    session.sleepQuality ?: 0f,
+                    session.efficiency ?: 0f
+                )
+                
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false,
+                        hasLastNightData = true,
+                        sleepScore = score,
+                        scoreMessage = getScoreMessage(score),
+                        totalSleepHours = "${hours}시간 ${minutes}분",
+                        sleepEfficiency = ((session.efficiency ?: 0f) * 100).toInt(),
+                        bedTime = formatTime(session.startTime),
+                        wakeTime = session.endTime?.let { formatTime(it) } ?: "--:--"
                     )
-                    
-                    _uiState.update { 
-                        it.copy(
-                            isLoading = false,
-                            hasLastNightData = true,
-                            sleepScore = score,
-                            scoreMessage = getScoreMessage(score),
-                            totalSleepHours = "${hours}시간 ${minutes}분",
-                            sleepEfficiency = ((session.efficiency ?: 0f) * 100).toInt(),
-                            bedTime = formatTime(session.startTime),
-                            wakeTime = session.endTime?.let { formatTime(it) } ?: "--:--"
-                        )
-                    }
-                    
-                    // Load analysis if available
-                    loadSessionDetails(session.id)
-                } else {
-                    _uiState.update { 
-                        it.copy(
-                            isLoading = false,
-                            hasLastNightData = false,
-                            sleepScore = 0,
-                            scoreMessage = "수면 데이터가 없습니다"
-                        ) 
-                    }
+                }
+                
+                // Load analysis if available
+                loadSessionDetails(session.id)
+            } else {
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false,
+                        hasLastNightData = false,
+                        sleepScore = 0,
+                        scoreMessage = "수면 데이터가 없습니다"
+                    ) 
                 }
             }
         }

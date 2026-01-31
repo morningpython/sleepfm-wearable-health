@@ -22,4 +22,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "SleepFM"
 include(":app")
-// include(":wear")  // Wear OS module - Sprint 14
+include(":wear")  // Wear OS module - Sprint 14

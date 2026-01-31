@@ -137,4 +137,109 @@ class SleepTrackingRepositoryTest {
         // Then
         coVerify { sleepDataStore.clearTrackingData() }
     }
+
+    @Test
+    fun `initial trackingState is not tracking`() = runTest {
+        // Then
+        val state = repository.trackingState.value
+        assertFalse(state.isTracking)
+        assertNull(state.startTime)
+    }
+
+    @Test
+    fun `startTracking sets startTime to current time`() = runTest {
+        // Given
+        val beforeStart = System.currentTimeMillis()
+
+        // When
+        repository.startTracking()
+
+        // Then
+        val state = repository.trackingState.value
+        assertNotNull(state.startTime)
+        assertTrue(state.startTime!! >= beforeStart)
+    }
+
+    @Test
+    fun `stopTracking returns empty data when no readings collected`() = runTest {
+        // Given
+        val emptyData = CollectedSleepData(
+            startTime = 0L,
+            endTime = 1000L,
+            heartRateData = emptyList(),
+            spO2Data = emptyList(),
+            accelerometerData = emptyList()
+        )
+        coEvery { sleepDataStore.getCollectedSleepData() } returns emptyData
+
+        // When
+        val result = repository.stopTracking()
+
+        // Then
+        assertTrue(result.heartRateData.isEmpty())
+        assertTrue(result.spO2Data.isEmpty())
+        assertTrue(result.accelerometerData.isEmpty())
+    }
+
+    @Test
+    fun `multiple startTracking calls are idempotent`() = runTest {
+        // When
+        repository.startTracking()
+        val firstState = repository.trackingState.value
+        
+        repository.startTracking()
+        val secondState = repository.trackingState.value
+
+        // Then - both should be tracking
+        assertTrue(firstState.isTracking)
+        assertTrue(secondState.isTracking)
+    }
+
+    @Test
+    fun `getLastSession returns null when no session exists`() = runTest {
+        // Given
+        coEvery { sleepDataStore.getLastSession() } returns null
+
+        // When
+        val result = repository.getLastSession()
+
+        // Then
+        assertNull(result)
+    }
+
+    @Test
+    fun `saveHeartRateReading with multiple readings`() = runTest {
+        // Given
+        val readings = listOf(
+            SensorReading(timestamp = 1000L, value = 70f),
+            SensorReading(timestamp = 2000L, value = 72f),
+            SensorReading(timestamp = 3000L, value = 68f)
+        )
+
+        // When
+        readings.forEach { repository.saveHeartRateReading(it) }
+
+        // Then
+        readings.forEach { reading ->
+            coVerify { sleepDataStore.saveHeartRateReadings(listOf(reading)) }
+        }
+    }
+
+    @Test
+    fun `saveSpO2Reading with multiple readings`() = runTest {
+        // Given
+        val readings = listOf(
+            SensorReading(timestamp = 1000L, value = 98f),
+            SensorReading(timestamp = 2000L, value = 97f),
+            SensorReading(timestamp = 3000L, value = 99f)
+        )
+
+        // When
+        readings.forEach { repository.saveSpO2Reading(it) }
+
+        // Then
+        readings.forEach { reading ->
+            coVerify { sleepDataStore.saveSpO2Readings(listOf(reading)) }
+        }
+    }
 }

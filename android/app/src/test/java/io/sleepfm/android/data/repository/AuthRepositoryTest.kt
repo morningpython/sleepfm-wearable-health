@@ -117,4 +117,92 @@ class AuthRepositoryTest {
         assertTrue(result.isSuccess)
         coVerify { tokenManager.saveTokens("new_access", "new_refresh") }
     }
+
+    @Test
+    fun `register failure returns error`() = runTest {
+        // Given
+        coEvery { api.register(any()) } returns Response.error(400, mockk(relaxed = true))
+
+        // When
+        val result = repository.register("test@test.com", "password", "user")
+
+        // Then
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `getMe returns user on success`() = runTest {
+        // Given
+        val user = User(
+            id = 1,
+            email = "test@test.com",
+            username = "testuser",
+            createdAt = "2026-01-01T00:00:00",
+            isActive = true
+        )
+        coEvery { api.getCurrentUser() } returns Response.success(user)
+
+        // When
+        val result = repository.getMe()
+
+        // Then
+        assertTrue(result.isSuccess)
+        assertEquals(user, result.getOrNull())
+    }
+
+    @Test
+    fun `getMe returns failure on error`() = runTest {
+        // Given
+        coEvery { api.getCurrentUser() } returns Response.error(401, mockk(relaxed = true))
+
+        // When
+        val result = repository.getMe()
+
+        // Then
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `refreshToken success saves new tokens`() = runTest {
+        // Given
+        val authResponse = AuthResponse(
+            accessToken = "new_access",
+            refreshToken = "new_refresh",
+            tokenType = "Bearer",
+            user = null
+        )
+        coEvery { tokenManager.getRefreshToken() } returns flowOf("old_refresh")
+        coEvery { api.refreshToken(any()) } returns Response.success(authResponse)
+
+        // When
+        val result = repository.refreshToken()
+
+        // Then
+        assertTrue(result.isSuccess)
+        coVerify { tokenManager.saveTokens("new_access", "new_refresh") }
+    }
+
+    @Test
+    fun `refreshToken fails when no refresh token`() = runTest {
+        // Given
+        coEvery { tokenManager.getRefreshToken() } returns flowOf(null)
+
+        // When
+        val result = repository.refreshToken()
+
+        // Then
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `login handles exception`() = runTest {
+        // Given
+        coEvery { api.login(any()) } throws RuntimeException("Network error")
+
+        // When
+        val result = repository.login("test@test.com", "password")
+
+        // Then
+        assertTrue(result.isFailure)
+    }
 }

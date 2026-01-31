@@ -114,4 +114,89 @@ class SleepRepositoryTest {
         // Then
         assertTrue(result.isSuccess)
     }
+
+    @Test
+    fun `analyzeSession returns failure on error`() = runTest {
+        // Given
+        coEvery { api.getAnalysis(any()) } returns Response.error(500, mockk(relaxed = true))
+
+        // When
+        val result = repository.analyzeSession(1)
+
+        // Then
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `getHistory returns failure on error`() = runTest {
+        // Given
+        coEvery { api.getHistory(any()) } returns Response.error(500, mockk(relaxed = true))
+
+        // When
+        val result = repository.getHistory(30)
+
+        // Then
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `getLatestSession returns failure on error`() = runTest {
+        // Given
+        coEvery { api.getLatestSession() } returns Response.error(404, mockk(relaxed = true))
+
+        // When
+        val result = repository.getLatestSession()
+
+        // Then
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `predictDiseaseRisk returns result on success`() = runTest {
+        // Given
+        val riskResponse = mockk<io.sleepfm.android.domain.model.DiseaseRiskResponse>(relaxed = true)
+        coEvery { api.getDiseaseRisk(any()) } returns Response.success(riskResponse)
+
+        // When
+        val result = repository.predictDiseaseRisk(1)
+
+        // Then
+        assertTrue(result.isSuccess)
+    }
+
+    @Test
+    fun `predictDiseaseRisk returns failure on error`() = runTest {
+        // Given
+        coEvery { api.getDiseaseRisk(any()) } returns Response.error(500, mockk(relaxed = true))
+
+        // When
+        val result = repository.predictDiseaseRisk(1)
+
+        // Then
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `getSession handles exception`() = runTest {
+        // Given
+        coEvery { api.getSession(any()) } throws RuntimeException("Network error")
+
+        // When
+        val result = repository.getSession(1)
+
+        // Then
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `getHistory handles exception`() = runTest {
+        // Given
+        coEvery { api.getHistory(any()) } throws RuntimeException("Network error")
+
+        // When
+        val result = repository.getHistory()
+
+        // Then
+        assertTrue(result.isFailure)
+    }
 }
